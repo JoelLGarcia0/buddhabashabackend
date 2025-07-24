@@ -10,6 +10,7 @@ django-cloudinary-storage==0.3.0
 django-cors-headers==4.7.0
 django-jazzmin==3.0.1
 djangorestframework==3.16.0
+gunicorn==23.0.0
 idna==3.10
 jsonpath-python==1.0.6
 marshmallow==3.26.1
