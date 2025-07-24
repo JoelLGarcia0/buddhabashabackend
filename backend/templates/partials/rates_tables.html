@@ -1,0 +1,32 @@
+<thead>
+  <tr>
+    <th>Select</th>
+    <th>Provider</th>
+    <th>Service</th>
+    <th>Cost</th>
+    <th>ETA</th>
+  </tr>
+</thead>
+<tbody>
+  {% for rate in rates %}
+  <tr>
+    <td>
+      <input
+        type="radio"
+        name="selected_rate_id"
+        value="{{ rate.object_id }}"
+        {%
+        if
+        forloop.first
+        %}checked{%
+        endif
+        %}
+      />
+    </td>
+    <td>{{ rate.provider }}</td>
+    <td>{{ rate.servicelevel.name }}</td>
+    <td>${{ rate.amount }}</td>
+    <td>{{ rate.estimated_days }} days</td>
+  </tr>
+  {% endfor %}
+</tbody>

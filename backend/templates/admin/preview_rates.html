@@ -1,0 +1,129 @@
+{% extends "admin/base_site.html" %} {% block content %}
+<div style="max-width: 800px; margin: 0 auto">
+  <h1>📦 Shipping Details for Order #{{ order.id }}</h1>
+
+  <!-- Form to set dimensions and refresh -->
+  <form
+    method="POST"
+    action="{% url 'preview_rates' order.id %}?refreshed=true"
+  >
+    {% csrf_token %}
+
+    <h3>Customer Info</h3>
+    <ul>
+      <li>
+        <strong>Name:</strong> {{ order.first_name }} {{ order.last_name }}
+      </li>
+      <li><strong>Email:</strong> {{ order.email }}</li>
+      <li>
+        <strong>Shipping Address:</strong>
+        {{ order.shipping_address.line1 }}<br />
+        {{ order.shipping_address.city }}, {{ order.shipping_address.state }},
+        {{ order.shipping_address.postal_code }}
+      </li>
+    </ul>
+
+    <h3>Adjust Parcel Dimensions</h3>
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      "
+    >
+      <label
+        >Length (in):
+        <input
+          type="number"
+          name="parcel_length"
+          step="0.1"
+          value="{{ order.parcel_length }}"
+          required
+        />
+      </label>
+      <label
+        >Width (in):
+        <input
+          type="number"
+          name="parcel_width"
+          step="0.1"
+          value="{{ order.parcel_width }}"
+          required
+        />
+      </label>
+      <label
+        >Height (in):
+        <input
+          type="number"
+          name="parcel_height"
+          step="0.1"
+          value="{{ order.parcel_height }}"
+          required
+        />
+      </label>
+      <label
+        >Weight (lb):
+        <input
+          type="number"
+          name="parcel_weight"
+          step="0.1"
+          value="{{ order.parcel_weight }}"
+          required
+        />
+      </label>
+    </div>
+
+    <button
+      type="submit"
+      style="
+        margin-bottom: 1rem;
+        padding: 8px 16px;
+        background: gray;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      "
+    >
+      Set Parcel Dimensions & Refresh Rates
+    </button>
+  </form>
+
+  <!-- Form to confirm and generate label -->
+  {% if rates %}
+  <form method="POST" action="{% url 'generate_label' order.id %}">
+    {% csrf_token %}
+    <h3>Available Rates</h3>
+    <table id="rates-table" style="width: 100%; border-collapse: collapse">
+      {% include "partials/rates_tables.html" with rates=rates %}
+    </table>
+
+    <button
+      type="submit"
+      style="
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: blue;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      "
+      {%
+      if
+      not
+      refreshed
+      %}disabled{%
+      endif
+      %}
+    >
+      Confirm & Generate Label
+    </button>
+  </form>
+  {% else %}
+  <p style="color: red">
+    ⚠️ No rates available. Please verify parcel dimensions.
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

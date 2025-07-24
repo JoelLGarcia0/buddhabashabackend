@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>New Order Notification</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f9f9f9;
+        color: #222;
+        padding: 20px;
+      }
+      .container {
+        background: #fff;
+        padding: 24px;
+        border-radius: 6px;
+        border: 1px solid #eee;
+        max-width: 600px;
+        margin: auto;
+      }
+      h2 {
+        margin-top: 0;
+        color: #111;
+      }
+      .item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+      }
+      .item p {
+        margin: 4px 0;
+        font-size: 14px;
+      }
+      .summary {
+        margin-top: 16px;
+      }
+      .address p {
+        margin: 2px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>New Order Received: #{{ order_id }}</h2>
+      <p><strong>Placed on:</strong> {{ now|date:"F j, Y, g:i a" }}</p>
+
+      <div class="summary">
+        <h3>Customer Info</h3>
+        <p><strong>Name:</strong> {{ first_name }} {{ last_name }}</p>
+        <p><strong>Email:</strong> {{ customer_email }}</p>
+      </div>
+
+      <div class="summary">
+        <h3>Shipping Address</h3>
+        <div class="address">
+          <p>{{ shipping_address.name|default:"" }}</p>
+          <p>{{ shipping_address.line1 }}</p>
+          <p>{{ shipping_address.city }}, {{ shipping_address.state }}</p>
+          <p>
+            {{ shipping_address.postal_code }}, {{ shipping_address.country }}
+          </p>
+        </div>
+      </div>
+
+      <div class="summary">
+        <h3>Items</h3>
+        {% for item in items %}
+        <div class="item">
+          <p><strong>{{ item.variant.product.name }}</strong></p>
+          <p>Size: {{ item.variant.size }} × {{ item.quantity }}</p>
+          <p>Unit Price: ${{ item.price|floatformat:2 }}</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="summary">
+        <p><strong>Shipping:</strong> ${{ shipping_cost|floatformat:2 }}</p>
+        <p><strong>Total:</strong> ${{ total|floatformat:2 }}</p>
+      </div>
+
+      <p style="margin-top: 30px; font-size: 13px; color: #666">
+        This is an internal notification. You do not need to reply.
+      </p>
+    </div>
+  </body>
+</html>
