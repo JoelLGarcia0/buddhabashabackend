@@ -97,8 +97,8 @@ class StripeCheckoutView(APIView):
             }
         }
     ],
-            success_url='http://localhost:3000/success',
-            cancel_url='http://localhost:3000/cancel',
+            success_url='https://buddhabashafrontend.vercel.app/success',
+            cancel_url='https://buddhabashafrontend.vercel.app/cancel',
             metadata={
                 'email': data.get('email', ''),
                 'clerk_user_id': str(clerk_user_id or ''),
