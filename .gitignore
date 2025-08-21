@@ -1,1 +1,19 @@
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+env/
+.DS_Store
+staticfiles/
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+env/
+.DS_Store
+staticfiles/
