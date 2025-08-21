@@ -25,10 +25,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-nma=xi6x2p-crjg^ifqqkapyu1qjd0l=+wn)-rijk_o%$!k3w_")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    print("Warning: DJANGO_SECRET_KEY not set, using fallback key")
+    SECRET_KEY = "django-insecure-nma=xi6x2p-crjg^ifqqkapyu1qjd0l=+wn)-rijk_o%$!k3w_"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+if DEBUG:
+    print("Warning: DEBUG is enabled - this should not be used in production!")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
@@ -63,6 +68,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Add whitenoise here
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -96,16 +102,33 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PWD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+# Get database settings with better error handling
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+db_pwd = os.getenv("DB_PWD")
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT", "5432")
+
+if not all([db_name, db_user, db_pwd, db_host]):
+    print("Warning: Database environment variables not properly set")
+    # Fallback to SQLite for development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": db_user,
+            "PASSWORD": db_pwd,
+            "HOST": db_host,
+            "PORT": db_port,
+        }
+    }
 
 
 # Password validation
@@ -176,11 +199,38 @@ SHIPPO_API_KEY = os.getenv("SHIPPO_API_KEY")
 CLERK_JWKS_URL = os.getenv("CLERK_JWKS_URL")
 CLERK_WEBHOOK_SECRET = os.getenv("CLERK_WEBHOOK_SECRET")
 
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_URL").split('@')[-1],
-    api_key=os.getenv("CLOUDINARY_URL").split("//")[1].split(":")[0],
-    api_secret=os.getenv("CLOUDINARY_URL").split(":")[2].split("@")[0]
-)
+# Cloudinary configuration - more robust parsing
+cloudinary_url = os.getenv("CLOUDINARY_URL")
+if cloudinary_url:
+    try:
+        # Handle different Cloudinary URL formats
+        if cloudinary_url.startswith('cloudinary://'):
+            # Format: cloudinary://api_key:api_secret@cloud_name
+            parts = cloudinary_url.replace('cloudinary://', '').split('@')
+            if len(parts) == 2:
+                credentials = parts[0].split(':')
+                cloud_name = parts[1]
+                if len(credentials) == 2:
+                    api_key, api_secret = credentials
+                    cloudinary.config(
+                        cloud_name=cloud_name,
+                        api_key=api_key,
+                        api_secret=api_secret
+                    )
+        else:
+            # Fallback to original parsing for backward compatibility
+            cloud_name = cloudinary_url.split('@')[-1]
+            api_key = cloudinary_url.split("//")[1].split(":")[0]
+            api_secret = cloudinary_url.split(":")[2].split("@")[0]
+            cloudinary.config(
+                cloud_name=cloud_name,
+                api_key=api_key,
+                api_secret=api_secret
+            )
+    except Exception as e:
+        print(f"Warning: Could not parse CLOUDINARY_URL: {e}")
+        # Set default values or skip configuration
+        pass
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",

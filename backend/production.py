@@ -5,7 +5,16 @@ from .settings import *
 
 # Production security settings
 DEBUG = False
+
+# SECRET_KEY - critical for Django to function
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    print("CRITICAL ERROR: DJANGO_SECRET_KEY not set in production!")
+    print("Please set this environment variable on your deployment platform")
+    # Generate a temporary key (this should be replaced with a real one)
+    import secrets
+    SECRET_KEY = secrets.token_urlsafe(50)
+    print(f"Generated temporary SECRET_KEY: {SECRET_KEY[:20]}...")
 
 # HTTPS settings
 SECURE_SSL_REDIRECT = True
@@ -22,9 +31,16 @@ SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
-
-# Allowed hosts - set this to your actual domain
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+# ALLOWED_HOSTS - critical for Django to accept requests
+allowed_hosts = os.getenv("ALLOWED_HOSTS")
+if not allowed_hosts:
+    print("CRITICAL ERROR: ALLOWED_HOSTS not set in production!")
+    print("Please set this environment variable on your deployment platform")
+    # Set a default that should work for most deployments
+    ALLOWED_HOSTS = ["*"]  # WARNING: This allows all hosts - set properly in production
+    print("Set ALLOWED_HOSTS to ['*'] as fallback - PLEASE FIX THIS!")
+else:
+    ALLOWED_HOSTS = allowed_hosts.split(",")
 
 # CORS settings for production
 CORS_ALLOWED_ORIGINS = [
@@ -47,9 +63,22 @@ DATABASES = {
     }
 }
 
-# Static files
+# Static files - simplified since no static files exist
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Create empty staticfiles directory if it doesn't exist
+if not os.path.exists(STATIC_ROOT):
+    try:
+        os.makedirs(STATIC_ROOT, exist_ok=True)
+        print(f"Created staticfiles directory: {STATIC_ROOT}")
+    except Exception as e:
+        print(f"Warning: Could not create staticfiles directory: {e}")
+
+# Use basic WhiteNoise storage since no static files to compress
+STATICFILES_STORAGE = 'whitenoise.storage.WhiteNoiseStaticFilesStorage'
+
+# Disable static file serving since no files exist
+WHITENOISE_USE_FINDERS = False
 
 # Logging
 LOGGING = {
@@ -61,16 +90,19 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': '/tmp/django.log',
         },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
-} 
-# Ensure WhiteNoise is active in production (serves /static/)
-if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
-    idx = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
-    MIDDLEWARE.insert(idx + 1, "whitenoise.middleware.WhiteNoiseMiddleware")
+}
+
+# Remove the whitenoise middleware insertion since it's now in base settings
+# WhiteNoise is already configured in the base settings.py
