@@ -70,3 +70,7 @@ LOGGING = {
         },
     },
 } 
+# Ensure WhiteNoise is active in production (serves /static/)
+if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
+    idx = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
+    MIDDLEWARE.insert(idx + 1, "whitenoise.middleware.WhiteNoiseMiddleware")
